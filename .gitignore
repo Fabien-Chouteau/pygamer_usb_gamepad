@@ -1,0 +1,8 @@
+/obj/
+/bin/
+/alire/
+/config/
+uf2conv.py
+uf2families.json
+pygamer_usb_gamepad.bin
+pygamer_usb_gamepad.uf2

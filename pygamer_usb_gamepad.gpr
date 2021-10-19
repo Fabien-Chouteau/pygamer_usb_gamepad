@@ -1,0 +1,100 @@
+with "config/pygamer_usb_gamepad_config.gpr";
+
+with "pygamer_bsp.gpr";
+
+project Pygamer_Usb_Gamepad is
+
+   for Target use PyGamer_BSP'Target;
+   for Runtime ("Ada") use PyGamer_BSP'Runtime ("Ada");
+
+   for Languages use ("Ada", "ASM_CPP");
+   for Source_Dirs use ("src", "config");
+   for Object_Dir use "obj";
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use ("pygamer_usb_gamepad.adb");
+
+   package Builder is
+      for Executable ("pygamer_usb_gamepad.adb") use "pygamer_usb_gamepad.elf";
+   end Builder;
+
+   package Device_Configuration renames PyGamer_BSP.Device_Configuration;
+
+   package Linker is
+      for Switches ("Ada") use ("-T", Project'Project_dir & "/src/link.ld",
+                                "-Wl,--print-memory-usage",
+                                "-Wl,--gc-sections");
+   end Linker;
+
+   type Enabled_Kind is ("enabled", "disabled");
+   Compile_Checks : Enabled_Kind := External ("PYGAMER_USB_CONTROLLER_COMPILE_CHECKS", "disabled");
+   Runtime_Checks : Enabled_Kind := External ("PYGAMER_USB_CONTROLLER_RUNTIME_CHECKS", "disabled");
+   Style_Checks : Enabled_Kind := External ("PYGAMER_USB_CONTROLLER_STYLE_CHECKS", "disabled");
+   Contracts_Checks : Enabled_Kind := External ("PYGAMER_USB_CONTROLLER_CONTRACTS", "disabled");
+
+   type Build_Kind is ("debug", "optimize");
+   Build_Mode : Build_Kind := External ("PYGAMER_USB_CONTROLLER_BUILD_MODE", "optimize");
+
+   Compile_Checks_Switches := ();
+   case Compile_Checks is
+      when "enabled" =>
+         Compile_Checks_Switches :=
+           ("-gnatwa",  -- All warnings
+            "-gnatVa",  -- All validity checks
+            "-gnatwe"); -- Warnings as errors
+      when others => null;
+   end case;
+
+   Runtime_Checks_Switches := ();
+   case Runtime_Checks is
+      when "enabled" => null;
+      when others =>
+         Runtime_Checks_Switches :=
+           ("-gnatp"); -- Suppress checks
+   end case;
+
+   Style_Checks_Switches := ();
+   case Style_Checks is
+      when "enabled" =>
+         Style_Checks_Switches :=
+           ("-gnatyg",   -- GNAT Style checks
+            "-gnaty-d",  -- Disable no DOS line terminators
+            "-gnatyM80", -- Maximum line length
+            "-gnatyO");  -- Overriding subprograms explicitly marked as such
+      when others => null;
+   end case;
+
+   Contracts_Switches := ();
+   case Contracts_Checks is
+      when "enabled" =>
+         Contracts_Switches :=
+           ("-gnata"); --  Enable assertions and contracts
+      when others => null;
+   end case;
+
+   Build_Switches := ();
+   case Build_Mode is
+      when "optimize" =>
+         Build_Switches := ("-O3",     -- Optimization
+                            "-gnatn"); -- Enable inlining
+      when "debug" =>
+         Build_Switches := ("-g",   -- Debug info
+                            "-Og"); -- No optimization
+   end case;
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        Compile_Checks_Switches &
+        Build_Switches &
+        Runtime_Checks_Switches &
+        Style_Checks_Switches &
+        Contracts_Switches &
+        ("-gnatw.X", -- Disable warnings for No_Exception_Propagation
+         "-gnatQ");  -- Don't quit. Generate ALI and tree files even if illegalities
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+end Pygamer_Usb_Gamepad;
