@@ -7,11 +7,9 @@ maintainers = ["Fabien Chouteau <fabien.chouteau@gmail.com>"]
 maintainers-logins = ["Fabien-Chouteau"]
 
 executables = ["pygamer_usb_controller"]
+
 [[depends-on]]
 pygamer_bsp = "^1.0.0"
-gnat_arm_elf = "^11.2.2"
-usb_embedded = "~0.1.0"
 
 [[pins]]
-usb_embedded = { path='../usb_embedded' }
-samd51_hal = { path='../samd51-hal' }
+pygamer_bsp = { url='https://github.com/Fabien-Chouteau/pygamer-bsp' }
